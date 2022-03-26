@@ -1,0 +1,233 @@
+---
+title: "Purse STEM SpotifyR data"
+author: "Liza Bolton"
+output: pdf_document
+urlcolor: blue
+---
+
+```{r setup, message=FALSE}
+library(tidyverse)
+library(spotifyr)
+
+student <- read_csv("student-ans-13.csv")
+```
+
+```{r}
+student_artists <- student %>% 
+  select(9) %>% 
+  rename(answer = 1) %>% 
+  mutate(answer = str_replace(answer, "classify\\\\, ", "classify ")) %>% 
+  separate(answer, into = c("a1", "a1_rate", "a2", "a2_rate", "a3", "a3_rate"), sep=",") %>% 
+  unite("one", "a1", "a1_rate", sep = ";") %>% 
+  unite("two", "a2", "a2_rate", sep = ";") %>% 
+  unite("three", "a3", "a3_rate", sep = ";") %>% 
+  pivot_longer(everything()) %>% 
+  select(-name) %>% 
+  separate(value, into = c("artist", "vibe"), sep = ";") %>% 
+  filter(artist != "NA") %>% 
+  mutate(vibe = case_when(
+    artist == "Kendrick Lamar" ~ "",
+    artist == "Rihanna" ~ "",
+    artist == "Rod Wave" ~ "",
+    TRUE ~vibe
+  ))
+
+saveRDS(student_artists, "data/student.RDS")
+
+```
+
+
+```{r}
+
+artists_clean <- student_artists %>% 
+  mutate(artist = str_to_lower(artist)) %>% 
+  distinct(artist) %>% 
+  glue::glue_collapse(sep = "\", \"")
+
+artists_clean_c <- c("bruno mars", "daniel ceaser ", "billie eilish", "shenseea", "nicki minaj", "billie eilish ", "ariana grande", "taylor swift", "lorde", "queen", "tyler the creator", "daniel ceaser", "fall out boy", "ellise", "nf", "got7", "melanie martinez", "harry styles", "rihanna ", "rod wave", "kendrick lamar", "rex orange county", "jeff bernat", "mac ayres", "toosii", "lil tjay", "polo g", "central cee", "digga d", "bts", "mitski", "the strokes")
+
+my_list <- as.list(artists_clean_c)
+names(my_list) <- artists_clean_c
+
+for(i in 1:length(artists_clean_c)){
+  print(paste(i, artists_clean_c[i]))
+  my_list[[i]] <- tryCatch({
+    get_artist_audio_features(artist = artists_clean_c[i])
+  }, error=function(e){
+    return(NA)
+  }
+  )
+}
+
+songs <- do.call(rbind.data.frame, my_list) %>% 
+  filter(!is.na(artist_name))
+saveRDS(songs, "data/songs.RDS")
+```
+
+
+```{r genre}
+rownames(songs) <- c()
+songs %>% 
+  select(artist_id) %>% 
+  distinct(artist_id) %>% 
+  glue::glue_collapse(sep = "\", \"")
+
+artist_id <- c("0du5cEVh5yTK9QJze8zA0C", "20wkVLutqVOYrc0kxFs7rA", "6qqNVTkY8uBg9cP3Jd7DAH", "0hCNtLu0JehylgoiP8L4Gh", "66CXWjxzNUsdJxJ2JdwvnR", "06HL4z0CvFAxyc27GXpf02", "163tK9Wjr9P9DmM0AVK7lm", "1dfeR4HaWDbWqFHLkxsg1d", "4V8LLVI7PbaPR0K2TGSxFF", "4UXqAaa6dQYAk18Lv7PEgX", "6fOMl44jA4Sp5b9PpYCkzz", "6nfDaffa50mKtEOwR8g4df", "63yrD80RY3RNEM2YDpUpO8", "6KImCVD70vtIoJWnq6nGn3", "5pKCCKE2ajJHZ9KAiaK11H", "45TgXXqMDdF8BkjA83OM7z", "2YZyLoL8N0Wb9xBt1NhZWg", "7pbDxGE6nQSZVfiFdq9lOL", "2vVT4qoxWje0gVD2FiWZ4u", "0fTav4sBLmYOAzKuJw0grL", 
+"6BH1xcDkwbbyrLMUKECsW1", "6jGMq4yGs7aQzuGsMgVgZR", "6AgTAQt8XS6jRWi4sX7w49", "5H4yInM5zmHqpKIoMNAx4r", "57n1OF36WvtOeATY6WQ6iw", "3Nrfpe0tUJi4K4DXYWgMUX", "2uYWxilOVlUdk4oV9DvwqK", "0epOFNiUfyON9EYx7Tpr6V")
+
+my_list_id <- as.list(artist_id)
+names(my_list_id) <- artist_id
+
+for(i in 1:length(artist_id)){
+  print(paste(i, artist_id[i]))
+  my_list_id[[i]] <- tryCatch({
+    get_artists(artist_id[i])
+  }, error=function(e){
+    return(NA)
+  }
+  )
+}
+
+artist_info <- do.call(rbind.data.frame, my_list_id) %>% 
+  rownames_to_column(var = "artist_id")
+
+
+full <- songs %>% 
+  left_join(artist_info, by = "artist_id") %>% 
+  select(artist_name, popularity, followers.total, artist_id, album_name, album_release_year,  
+         track_name, track_id, 9:19,
+         key_name, mode_name, duration_ms, 
+         explicit, genres, followers.total) %>% 
+  rename(artist_genre = "genres", artist_popularity = "popularity", artist_followers = "followers.total") %>% 
+  select(-mode, -key, -key_name)
+
+
+# saveRDS(full, "data/full.RDS")
+student_final <- readRDS("data/full.RDS") %>% 
+  select(-contains("_id")) %>% 
+  mutate(artist_genre = as.character(artist_genre))
+
+write_csv(student_final, "data/for_students.csv")
+
+```
+
+
+```{r}
+my_list_id_top <- as.list(artist_id)
+names(my_list_id_top) <- artist_id
+
+for(i in 1:length(artist_id)){
+  print(paste(i, artist_id[i]))
+  my_list_id_top[[i]] <- tryCatch({
+    get_artist_top_tracks(artist_id[i])
+  }, error=function(e){
+    return(NA)
+  }
+  )
+}
+
+artist_info_top <- do.call(rbind.data.frame, my_list_id_top) %>% 
+  rownames_to_column(var = "artist_id")
+
+```
+
+
+```{r}
+artist_info_top %>% 
+  rename(track_id = "id") %>% 
+  select(track_id) %>% 
+  distinct(track_id) %>% 
+  glue::glue_collapse(sep = "\", \"")
+
+track_ids <- c("7MAibcTli4IisCtbHKrGMh", "0nJW01T7XtvILxQgC5J7Wh", "3w3y8KPTfNeOKPiqUTakBh", "161DnLWsx1i3u1JT05lzqU", "0KKkJNfGyhkQ5aFogxQAPU", "7BqBn9nzAq8spo5e7cZ0dJ", "6b8Be6ljOzmkOmFslEb23P", "55h7vJchibLdUkxdlX3fK7", "2tJulUYLDKOg9XrtVkMgcJ", "3Vo4wInECJQuz9BIBMOu8i", "4iJyoBOLtHqaGxP12qzhQI", "7zFXmv6vqI4qOt4yGf3jYZ", "1RMJOxR6GRPsBHL8qeC2ux", "1boXOL0ua7N2iCOUVI1p9F", "23c9gmiiv7RCu7twft0Mym", "3uouaAVXpQR3X8RYkJyitQ", "7Cu2COdH93MnuireuKNiS3", "1TPLsNVlofwX1txcE9gZZF", "0KyzXQhY2yzcb1FYCHkZc2", "1Mza2sr6tPhy6jjI3HB9fW", 
+"54bFM56PmE4YLRnqpW6Tha", "0u2P5u6lvoDfwTYjAADbn4", "2Fxmhks0bxGSBdJ92vM42m", "3ZCTVFBt2Brf31RLEnCkWJ", "43zdsphuZLzwA9k4DJhU0I", "6CcJMwBtXByIz4zQLzFkKc", "2uIX8YMNjGMD7441kqyyNU", "41zXlQxzTi6cGAjpOXyLYH", "3XF5xLJHOQQRbWya6hBp7d", "2ygvZOXrIeVL4xZmAWJT2C", "0dKg2vGC1hFqcK5LGTaKzX", "3hlksXnvbKogFdPbpO9vel", "0puf9yIluy9W0vpMEUoAnN", "6kex4EBAj0WHXDKZMEJaaF", "1oHNvJVbFkexQc0BpQp7Y4", "4wFjTWCunQFKtukqrNijEt", "222B3aljXx6fFwKmFjuBED", "75dLEqanQTupF3dtP9exT5", "11VApNQCWLJdzxWrlmwzUa", "1e4rwBPVI32vZtTJu7mJ4J", 
+"35mvY5S1H3J2QZyna3TFe0", "6Im9k8u9iIzKMrmV7BWtlF", "6ocbgoVGwYJhOv1GgI9NsF", "4HBZA5flZLE435QTztThqH", "3e9HZxeyfWwjeyPAMmWSSQ", "7ju97lgwC2rKQ6wwsf9no9", "3UoULw70kMsiVXxW0L3A33", "5GkQIP5mWPi4KZLLXeuFTT", "5OCJzvD7sykQEKHH7qAC3C", "2sQH02O2HBCPJCztBrCWNa", "6YvqWjhGD8mB5QXcbcUKtx", "3Uo7WG0vmLQ07WB4BDwy7D", "2CYVETnhM9aytqrazYYwrK", "4CHpVfAhuxNJ3ibExe6kxO", "4R2kfaDFhslZEMJqAFNpdd", "1qrpoAMXodY6895hGKoUpA", "77sMIMlNaSURUAXq5coCxE", "1p80LdxRV74UKvL8gnD7ky", "4pvb0WLRcMtbPGmtejJJ6y", "6RRNNciQGZEXnqk8SQ9yv5", 
+"0TEekvXTomKt3hdXDZxxeW", "7BFI9QZPQKgYuR2HhDgwbG", "6Kkt27YmFyIFrcX3QXFi2o", "6ie2Bw3xLj2JcGowOlcMhb", "15jRg8Ejs7X3JEHw38TSN3", "7ARveOiD31w2Nq0n5FsSf8", "2yrJ1jWo3HLksJFUqUsZE4", "6K8VQ84MqhsoakN5MjrnVR", "5u64RlrnvvbtNh6R0EMh6o", "6zLq4lYSu2W7LLxJlUWzz8", "57JVGBtBLCfHw2muk5416J", "7tFiyTwD0nx5a1eklYtX2J", "7hQJA50XrCWABAu5v6QZ4i", "11IzgLRXV7Cgek3tEgGgjw", "54flyrjcdnQdco7300avMJ", "7h2yhVxcZOGyQdOwD4Hu8J", "1HmzAZUvhQLhLo2z3ocpZI", "35ItUJlMtjOQW3SSiTCrrw", "7ccI9cStQbQdystvc6TvxD", "6cFZ4PLC19taNlpl9pbGMf", 
+"7KA4W4McWYRpgf0fWsJZWB", "5hVghJ4KaYES3BFUATCYn0", "3jHdKaLCkuNEkWcLVmQPCX", "1hz7SRTGUNAtIQ46qiNv2p", "1jzIJcHCXneHw7ojC6LXiF", "5WNYg3usc6H8N3MBEp4zVk", "4bEcoz1OcfMgUbp2ft8ieQ", "4f8Mh5wuWHOsfXtzjrJB3t", "0qtK3XwbuG153dmwB8iepL", "1nXZnTALNXiPlvXotqHm66", "04aAxqtGp5pv12UXAg4pkq", "2TfSHkHiFO4gRztVIkggkE", "7Feaw9WAEREY0DUOSXJLOM", "3Zwu2K0Qa5sT6teCCHPShP", "0a7BloCiNzLDD9qSQHh5m7", "3Te8uLyit6X3ncNW8Fp3K2", "2E43WFS4rRc09za2r2GmZl", "2v5JTeM6hSmi5wWy7jiwrI", "7jwDuO7UZvWs77KNj9HbvF", "5PUawWFG1oIS2NwEcyHaCr", 
+"52okn5MNA47tk87PeZJLEL", "7tTRFVlFzk6yTnoMcParmi", "07FkzikE6FuHIa8Ma7zJGc", "3i5qVV8azKqGFK4Gzdt5YS", "1mvI5pGoh84IiFSbWxEkGH", "1PTVGdcYyLFnJKVOkaxQWj", "5DHQKZCOZhGNTbYBCekWx0", "6MxMqCgqmekcr0VwSU7AVH", "2hRlHXzOf14ArYmOPeAXsa", "2FSVMyqLldC36p0deIYvI9", "2mf9FitEJnH6mcUU6y0Hkw", "1pmfd0ohjfh1qXPWvjaC1o", "6f4wghlwYWGLqGEIKc6HDQ", "6xrjIHbm6ga5J8HhOS2Rmn", "4ER58qECydWokIsgqtysWu", "0pDh5dMblZFw7bXRsbekZ1", "2iXvnjL5CH66UpnGjXHDmZ", "1xzCUpXSMnAbckUXDwBTlW", "4tzkSoh450XnimhNWVmBhg", "5t9w5O8sLvbB7hwfyzNXi5", 
+"4DpNNXFMMxQEKl7r0ykkWA", "3EGW6TGGbdk6Ys1Y3HU3lj", "6wNeKPXF0RDKyvfKfri5hf", "5gWtkdgdyt5bZt9i6n3Kqd", "360Wr96ywrCQq4kTAJ8Pq6", "3fo6DYGktjENCiagUeU9yH", "7FwWRSAlhfyhbvybdfDUCe", "3u1FiuSpfsgVnekEMXgMwJ", "3K1tdhoeE6koNnWgAxEK9Y", "6TNWeqDnqdqIQWYMWZmzTA", "6UelLqGlWMcVH1E5c4H7lY", "45S5WTQEGOB1VHr1Q4FuPl", "3jjujdWJ72nww5eGnfs2E7", "1ZMiCix7XSAbfAJlEZWMCp", "5Ohxk2dO5COHF1krpoPigN", "33SNO8AaciGbNaQFkxvPrW", "4jAIqgrPjKLTY9Gbez25Qb", "6VzcQuzTNTMFnJ6rBSaLH9", "5kRPPEWFJIMox5qIkQkiz5", "6SQLk9HSNketfgs2AyIiMs", 
+"2yPoXCs7BSIUrucMdK5PzV", "5oO3drDxtziYU2H1X23ZIp", "4pAl7FkDMNBsjykPXo91B3", "4TsmezEQVSZNNPv5RJ65Ov", "78TTtXnFQPzwqlbtbwqN0y", "1Jo0Zg7XlrA6z0mFTZVdkn", "4HDCLYli2SUdkq9OjmvhSD", "72TFWvU3wUYdUuxejTTIzt", "2VOomzT6VavJOGBeySqaMc", "4mCf3vQf7z0Yseo0RxAi3V", "7HsjuVBM93Z2RoxjpWLgTT", "3JYxIozjRsvEmHrIvfFhud", "5pRTz4O2qOkr5nawemy6Wb", "0qJeyYAgv6UpvewUxRXAhb", "6fWa5CRgy0z30OeGZyMBvD", "1ENdcyhqdylaLsPVgB83qq", "65QRS8iMQ1TsQ93fPZIZ4i", "31IfCad1R5g6xqsfdrKwnE", "09A5LOafre1MtFCBrjKmN4", "6aCC0TK1IJPALdwniMbok3", 
+"7KXjTSCq5nL1LoYtL7XAwS", "3GCdLUSnKSMJhs4Tj6CV3s", "6PGoSes0D9eUDeeAafB2As", "6HZILIRieu8S0iqY8kIKhj", "2HbKqm4o0w5wEeEFXm2sD4", "0N3W5peJUQtI4eyR6GJT5O", "3iVcZ5G6tvkXZkZKlMpIUs", "6REbwUNlppTfcnV4d4ZoZi", "65ES1qwOB577ZnTkizMXJJ", "6huNf4dutXRjJyGn7f5BPS", "47Bg6IrMed1GPbxRgwH2aC", "4EpZ4eYuZOwPSSwyqpdHnJ", "4EWBhKf1fOFnyMtUzACXEc", "5EYi2rH4LYs6M21ZLOyQTx", "02tvc9CFnTyHuSRlGeNv9w", "7vRia9rlEuTDQxkfXIKySi", "2rXVtoLBHuXcNB5DVfIc9p", "5OUTFH5acycdnf8OVo21Gv", "3PbV3ocgAp3Xn0omGFC0cG", "6Jl3ZOX6MUOlyoUc721bsX", 
+"4m5HKGwULoA0SvhaXiDMPR", "6sv7ZmasB6qSiF8hWJNpDG", "0Dw7uVJBAKCm6dfCoabJV9", "1aDCjyFTiY6EG9mbl7HMog", "6YKb5UMzDOtfCfbPvJZ8XT", "07tYyJZJyu7SYYG4EWKkGS", "6P2BlKa7uBwKV6KVsEBkmv", "5lKMZR9Imi8RREERjaJEb6", "7fU0YxB4RyawfEDv6vtYG7", "7bR71BCuzsddcdxrsLvjFF", "58dSdjfEYNSxte1aNVxuNf", "3XstzgzP0rp3bzElEnRVHv", "5pNiAcguRrBdYf5V0QXdir", "4Z5Bwienk09FUgwsMlsPwJ", "7fhFr1lYnxm3XyprL3Wnv8", "33VQJLL7QWS0LUuF7r39Rq", "4mIneE97TsDiTsoQkFSDrX", "5q0zxo739jt8HAyo88vNkt", "0DxUIAw4ZlsOOo2KPFU3Hf", "4zwbn8nmwsKR67EdRSaIU5", 
+"2ULQtFHTzUK0DqcqWUlXxw", "5gNWNrmx8AtVpcfdYqir1v", "2hzeDi6y5AeYhWWxmEzYyV", "1NJb7IHsjSL3CWmU0L4fe4", "6A3XCY7u3gMbEroabZKmMO", "3JP7KdSVvcX3mTfitBp2Ec", "4qkkL1BbQPcMkuWFlTctmk", "7pGruxehEyXHvXOGe9pDBb", "6KDQWm9BBxQZ7DMfO4ePgV", "7rW6u2nAwnhzEXspv3p30w", "3J8EOeKLTLXORtWPpOU5bE", "4eNOLmx8r2IJAVKvBBL1jv", "0RLLvYBopDwooCyvnTwgYu", "1dg3qy5DjoJodawfOCgrTP", "6uFn47ACjqYkc0jADwEdj1", "5JtvedSVWW9McnoEAPJwQm", "0W64NfLrIsRTAFObko6uJx", "3Ddny34bFoYBb8dIGq5lwp", "5qDsijQM75KTdv3RtSPx91", "3AmqJsyZDFA8EHC461R7bY", 
+"43PGPuHIlVOc04jrZVh9L6", "1VLtjHwRWOVJiE5Py7JxoQ", "3JKgcAa7r07ocVWcV8bS0H", "0ada5XsQGLPUVbmTCkAP49", "5J5CpT6bgE6KYKk23jgp9W", "3NqCEpT8xsHdzpiRlM1kpS", "2QqJTIlGKRLJC3onkavYEz", "4PklAHGXT5ityno3IA8SKd", "4vzJrkfHbCGaodPA5RY5BV", "1tLV0GD0WXQ1Z8BKOQscti", "0UCKUJU94sx8XBQnaNsRkB", "1o6x7iRcDQPEEg8YPgLeVA", "57fle7Lnf7lOXNf76r2x6C", "5gSZoRy42TxBxyAdHs9wXO", "107TX4vj1U8We3uqDmb9oO", "5WO3QkGOymQew1hH2A6oNY", "5CpnjR6DE6X3PFvmKqrw1l", "6vWPTYCSzyIVqgGMIui6bs", "3io8SywLvvaJDxTU94phL7", "4o2Iwvz9M7qdUUaCmfrZAQ", 
+"1kXHqvq1R8dkx1Mm52nH9g", "7EZA4wXtnlZBiJQibMvtyA", "6Sb6bDbhCuAi27HE9koUXp", "1u1QQ0WaMCFnWdNE4V61v6", "3HUb7feX3gdnzZVEHy5yFj", "70dadmYOwUCwEGHgEVV3NV", "5PyY4ZjrskOcr0HtSnxm0G", "25JRyuLsCus2fzuemAeVMS", "4saklk6nie3yiGePpBwUoc", "3UHPGOkUcE4hE7sqBF4Snt", "249gnXrbfmV8NG6jTEMSwD", "5KawlOMHjWeUjQtnuRs22c", "0n2moJpAEWHwaPYYjkzMDl", "4TgxFMOn5yoESW6zCidCXL", "2FVpOsjT1iquZ3SpCjZ9Ne", "2QyuXBcV1LJ2rq01KhreMF", "3QH8rQGNFX8VLbCgZ7uPTS", "3p6hnejEQYXkiTO1lAzVc0", "6bTn1ovliI0OkjUNkiMBJq", "5ErtQGRKEibK2WHaA729O8", 
+"4Ys8jQvZOISzmp34BsImRf", "3uS7pHvPRtJlyukzNZGpcO", "3eGsNpXzcb1BDkfSJI54NY", "6gpSU2C1VJq0xaVIGtQPVi", "1Ac5BDsGUMQ3tsW2vnc52x", "3udrjWCXCBotzU2uQ05Zmx", "4N2ibi4kcH4D5ZYYvMiKsg", "172rW45GEnGoJUuWfm1drt", "5ruzrDWcT0vuJIOMW7gMnW", "57Xjny5yNzAcsxnusKmAfA", "3SUusuA9jH1v6PVwtYMbdv", "4fPBB44eDH71YohayI4eKV", "2t0wwvR15fc3K1ey8OiOaN", "3Y4rUyw7XBCK6hGHCOt6rp", "55N8cxpE1QDoeaaNqUnoZ2", "6u0x5ad9ewHvs3z6u9Oe3c", "7hm4HTk9encxT0LYC0J6oI", "1BLOVHYYlH4JUHQGcpt75R")
+
+my_list_id_top <- as.list(track_ids)
+my_list_id_top_feat <- as.list(track_ids)
+names(my_list_id_top) <- track_ids
+names(my_list_id_top_feat) <- track_ids
+
+for(i in 1:length(track_ids)){
+  print(paste(i, track_ids[i]))
+  my_list_id_top_feat[[i]] <- tryCatch({
+    get_track_audio_features(track_ids[i])
+  }, error=function(e){
+    return(NA)
+  }
+  )
+  my_list_id_top[[i]] <- tryCatch({
+    get_tracks(track_ids[i])
+  }, error=function(e){
+    return(NA)
+  }
+  )
+}
+
+track_info_top <- do.call(rbind.data.frame, my_list_id_top) %>% 
+  rownames_to_column(var = "track_id")
+track_info_top_feat <- do.call(rbind.data.frame, my_list_id_top_feat) %>% 
+  rownames_to_column(var = "track_id")
+
+playlist <- track_info_top %>% 
+  left_join(track_info_top_feat, by = "track_id") %>% 
+  filter(!is.na(valence)) %>% 
+  filter(!explicit) %>% 
+  unnest(artists, names_repair = "unique") %>% 
+  rename(artist_name = 4) %>%
+  rename(url = 35) %>% 
+  rename(track_name = 15) %>% 
+  filter(str_to_lower(artist_name) %in% artists_clean_c) %>% 
+  mutate(dance_positive = danceability+valence) %>% 
+  arrange(desc(dance_positive)) %>% 
+  distinct(artist_name, .keep_all=TRUE) %>% 
+  select(track_name, artist_name, url, uri.x)
+  
+#  saveRDS(playlist, "data/playlist.RDS")
+
+playlist <- readRDS("data/playlist.RDS")
+
+playlist %>% 
+  select(track_name, artist_name, url, uri.x) %>% 
+  View()
+
+browseURL(url = playlist$url[1])
+
+add_tracks_to_playlist("0Oekyg80tJHmqNXNmUQaI8", playlist$uri.x[1])
+
+verify_result(playlist$uri.x[1])
+get_artist_top_tracks("1dfeR4HaWDbWqFHLkxsg1d")
+
+```
+
+
+```{r}
+full %>% 
+  filter(artist_name %in% c("BTS")) %>% 
+  ggplot(aes(x = valence, y = energy, colour = artist_name)) +
+    geom_point() +
+    theme_minimal() +
+    ylim(0,1) +
+    xlim(0,1) +
+    geom_hline(yintercept = 0.5) +
+    geom_vline(xintercept = 0.5) +
+    xlab("Positiveness (valence)") +
+    ylab("Engergy") + 
+    labs(title = "Song moods based on energy and positiveness", 
+         subtitle = "Using data from the Spotify API", 
+         colour = "Artist(s)",
+         caption = "Created by [your name] as part of Pursue STEM")
+```
+
+

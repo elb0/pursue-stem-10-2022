@@ -1,0 +1,561 @@
+---
+title: "Get data"
+output: html_notebook
+---
+
+# Spotify
+
+```{r, message = FALSE}
+library(tidyverse)
+library(spotifyr)
+```
+
+
+```{r}
+
+student_recs <- tibble::tribble(
+  ~ Artist_1,
+  ~ Genre_1,               
+  ~ Artist_2,
+  ~ Genre_2,
+  ~ Artist_3,
+  ~ Genre_3,
+  
+  "Summer Walker",
+  "Relaxing",
+  "Koffee",
+  "Relaxing",
+  "Brent Faiyaz",
+  "Energizing",
+  "H.E.R.",
+  "relaxing",
+  "Afro B",
+  "hard to classify",
+  "Alessia Cara",
+  "energizing",
+  "Nirvana",
+  "hard to classify",
+  "Drake",
+  "hard to classify",
+  "Kanye West",
+  "energizing",
+  "BTS",
+  "Variety of Music",
+  "MGMT",
+  "Relaxing",
+  "MHC",
+  "Variety of Music",
+  "BTS",
+  "This artist is both energising and relaxing",
+  "Stray Kids",
+  "Relaxing",
+  "Shawn Mendes",
+  "Energising",
+  "Conan Gray",
+  "Energizing with relaxing elements",
+  "Clairo",
+  "Energizing",
+  "Harry Styles",
+  "Relaxing",
+  "Cordae",
+  "Relaxing",
+  "Eli Fross",
+  "Hard to classify",
+  "Kendrick Lamar",
+  "Energizing",
+  "Mitski",
+  "hard to classify",
+  "HOYO-Mix",
+  "Relaxing",
+  "Cavetown",
+  "Energizing",
+  "Billie Eilish",
+  "Sad/Releasing angerr",
+  "PinkPantheress",
+  "good vibes/relaxing",
+  "SZA",
+  "makes you feel like main character",
+  "Bryson Tiller",
+  "relaxing",
+  "Drake",
+  "relaxing",
+  "RINI",
+  "energising",
+  "Bryson Tiller",
+  "relaxing",
+  "summer walker",
+  "energising",
+  "Drake",
+  "energizing",
+  "David Bowie",
+  "energising",
+  "Joy Division",
+  "neither/hard to classify",
+  "The Cure",
+  "neither/hard to classify",
+  "Taylor Swift",
+  "relaxing",
+  "Lana Del Rey",
+  "energizing",
+  "Arctic Monkeys",
+  "relaxing",
+  "Doja Cat",
+  "Energizing",
+  "The Neighborhood",
+  "Relaxing",
+  "SZA",
+  "Hard to classify",
+  "FINNEAS",
+  "relaxing",
+  "5 Seconds of Summer",
+  "both/mainly energizing",
+  "ROSALÍA",
+  "both"
+)
+
+
+```
+
+
+```{r}
+student_recs_clean <- student_recs %>% 
+  rowid_to_column() %>% 
+  pivot_longer(-rowid) %>% 
+  separate(name, sep = "_", into = c("type", "n")) %>% 
+  mutate(id = str_c(rowid, n)) %>% 
+  select(-rowid, -n) %>% 
+  pivot_wider(id_cols = id, names_from = type) 
+
+write_rds(student_recs_clean, "data/student.RDS")
+  
+```
+
+
+```{r}
+
+artist_list <- student_recs_clean %>% 
+  select(Artist) %>% 
+  distinct()
+
+get_artist <- function(artist_list, x, sleep = 2){
+  Sys.sleep(sleep)
+  print(as.character(artist_list[x,1]))
+  search_spotify(as.character(artist_list[x,1]), type = "artist", limit = 1)
+}
+
+get_artist(artist_list, 1)
+
+# artist_ids <- map_df(1:nrow(artist_list), get_artist, artist_list = artist_list)
+
+artist_list_id <- artist_ids %>% 
+  select(id)
+
+offset_artist_features <- function(artist_list, x, sleep = 2){
+  Sys.sleep(sleep)
+  print(artist_list[x,1])
+  get_artist_audio_features(artist_list[x,1])
+}
+
+# artist_features <- map_df(1:nrow(artist_list_id), offset_artist_features, artist_list = artist_list_id)
+
+write_rds(artist_features, "data/artist_22.Rds")
+
+```
+
+
+
+
+
+```{r}
+playlist <- track_info_top %>% 
+  left_join(track_info_top_feat, by = "track_id") %>% 
+  filter(!is.na(valence)) %>% 
+  filter(!explicit) %>% 
+  unnest(artists, names_repair = "unique") %>% 
+  rename(artist_name = 4) %>%
+  rename(url = 35) %>% 
+  rename(track_name = 15) %>% 
+  filter(str_to_lower(artist_name) %in% artists_clean_c) %>% 
+  mutate(dance_positive = danceability+valence) %>% 
+  arrange(desc(dance_positive)) %>% 
+  distinct(artist_name, .keep_all=TRUE) %>% 
+  select(track_name, artist_name, url, uri.x)
+  
+#  saveRDS(playlist, "data/playlist.RDS")
+
+playlist <- readRDS("data/playlist.RDS")
+
+playlist %>% 
+  select(track_name, artist_name, url, uri.x) %>% 
+  View()
+
+browseURL(url = playlist$url[1])
+
+add_tracks_to_playlist("2xWWSqVN6fzsMBPjFGZPCA", playlist$uri.x[1])
+
+verify_result(playlist$uri.x[1])
+get_artist_top_tracks("1dfeR4HaWDbWqFHLkxsg1d")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+offset_artist_features <- function(artist_list, x, sleep = 2){
+  Sys.sleep(sleep)
+  print(artist_list[x,2])
+  get_artist_audio_features(artist_list[x,1])
+}
+
+possget <- possibly(.f = offset_artist_features,  
+                    otherwise = NULL)
+
+artist_list <- artists %>% 
+  select(artist_id, artist_name) %>% 
+  distinct() 
+
+# artist_features <- map_df(1:nrow(artist_list), possget, artist_list = artist_list)
+```
+
+
+
+
+
+
+```{r, eval=FALSE}
+mod <- seq(0, 600, by = 100)
+
+# Get the tracks on the playlist
+# In sets of 100 at a time
+offset_playlist_tracks <- function(playlist, offset){
+  get_playlist_tracks(playlist, offset = offset)
+}
+
+tracks <- map_df(mod, offset_playlist_tracks, playlist = '7wnSMzB7ZrFBHODG0ycJIV')
+saveRDS(tracks, "prof-data/track_list.Rda")
+```
+
+```{r, eval=FALSE}
+mod <- seq(0, 600, by = 100)
+
+tracks <- readRDS("prof-data/track_list.Rda")
+
+# Get track audio features
+
+offset_audio_features <- function(tracklist, x, sleep = 16){
+  Sys.sleep(sleep)
+  get_track_audio_features(tracklist[(x+1):(x+100)])
+}
+
+
+features <- map_df(mod, offset_audio_features, tracklist = tracks$track.id) %>% 
+  distinct()
+
+saveRDS(features, "prof-data/track_features.Rda")
+```
+
+
+```{r}
+tracks <- readRDS("prof-data/track_list.Rda")
+
+
+remove_trackdot <- function(x){
+  str_remove(x, "track.")
+}
+
+add_artist <- function(x){
+  str_c("artist_", x)
+}
+
+artists <- tracks %>% 
+  select(track.id, track.artists) %>% 
+  unnest(track.artists) %>% 
+  rename_all(add_artist) %>% 
+  rename(id = 1) 
+
+
+show_artist <- tracks %>% 
+  left_join(artists, by = c("track.id" = "id")) %>% 
+  select(track.id, artist_name, track.name) %>% 
+  group_by(track.id, track.name) %>% 
+  summarise(artist = glue::glue_collapse(artist_name, sep = "; "))
+
+write_csv(show_artist, "prof-data/liza.csv")
+
+# saveRDS(artists, "prof-data/artists.Rda")
+
+offset_artist_features <- function(artist_list, x, sleep = 2){
+  Sys.sleep(sleep)
+  print(artist_list[x,2])
+  get_artist_audio_features(artist_list[x,1])
+}
+
+possget <- possibly(.f = offset_artist_features,  
+                    otherwise = NULL)
+
+artist_list <- artists %>% 
+  select(artist_id, artist_name) %>% 
+  distinct() 
+
+# artist_features <- map_df(1:nrow(artist_list), possget, artist_list = artist_list)
+```
+
+## Get all tracks for each listed artist
+
+```{r, eval = FALSE}
+
+artist_features_0 <- map_df(1:10, possget, artist_list = artist_list)
+saveRDS(artist_features_0, "prof-data/artist_features_0.Rds")
+Sys.sleep(30)
+
+artist_features_1 <- map_df(11:100, possget, artist_list = artist_list)
+saveRDS(artist_features_1, "prof-data/artist_features_1.Rds")
+Sys.sleep(30)
+
+artist_features_2 <- map_df(101:200, possget, artist_list = artist_list)
+saveRDS(artist_features_2, "prof-data/artist_features_2.Rds")
+Sys.sleep(30)
+
+artist_features_3 <- map_df(201:300, possget, artist_list = artist_list)
+saveRDS(artist_features_3, "prof-data/artist_features_3.Rds")
+Sys.sleep(30)
+
+artist_features_4a <- map_df(301:330, possget, artist_list = artist_list)
+saveRDS(artist_features_4a, "prof-data/artist_features_4a.Rds")
+Sys.sleep(30)
+
+artist_features_4b <- map_df(331:350, possget, artist_list = artist_list)
+saveRDS(artist_features_4b, "prof-data/artist_features_4b.Rds")
+Sys.sleep(30)
+
+artist_features_4c <- map_df(351:400, possget, artist_list = artist_list)
+saveRDS(artist_features_4c, "prof-data/artist_features_4c.Rds")
+Sys.sleep(30)
+
+artist_features_5 <- map_df(401:500, possget, artist_list = artist_list)
+saveRDS(artist_features_5, "prof-data/artist_features_5.Rds")
+Sys.sleep(30)
+
+artist_features_6 <- map_df(501:532, possget, artist_list = artist_list)
+saveRDS(artist_features_6, "prof-data/artist_features_6.Rds")
+
+
+
+```
+
+
+```{r}
+features_1 <- readRDS("prof-data/track_features.Rda") %>% 
+  select(id, everything(), -value, -analysis_url, -uri, -track_href)
+
+liza <- read_csv("prof-data/listened_to.csv") %>% 
+  rename(in_library = "liza")
+
+full <- tracks %>% 
+  select(starts_with("track")) %>% 
+  select(-starts_with("track.album")) %>% 
+  rename_all(remove_trackdot) %>% 
+  select(id, everything(), -is_local, -starts_with("external"),
+          -available_markets, -disc_number, -episode,
+         -duration_ms, -type,
+         -href, -preview_url, -track, -track_number, -uri) %>% 
+  left_join(features_1, by = "id") %>% 
+  left_join(liza, by = c("id" = "track.id")) %>% 
+  mutate(quad = case_when(
+    valence >= 0.5 & energy >= 0.5 ~"top right",
+    valence >= 0.5 & energy < 0.5 ~"top left",
+    valence < 0.5 & energy >= 0.5 ~"bottom right",
+    valence < 0.5 & energy < 0.5 ~"bottom left"
+  )) %>% 
+  filter(!is.na(id)) %>% 
+  left_join(show_artist, by = c("id" = "track.id")) %>% 
+  select(-type, -track.name, -time_signature) %>% 
+  select(track_id = "id", track_name = "name", artist, 
+         in_library, track_popularity = "popularity", 
+         explicit, everything(), 
+         -artists, -key, -duration_ms)
+  
+
+for_students <- full %>% 
+  select(-quad) 
+
+write_csv(for_students, "data/class_playlist.csv")
+
+test <- glm(in_library ~ track_popularity + danceability + energy + 
+      loudness + speechiness + acousticness + instrumentalness + liveness +
+      valence + tempo + mode, data = full,
+    family = "binomial")
+
+
+test <- glm(in_library ~ track_popularity + loudness + speechiness + 
+              acousticness + instrumentalness, data = full,
+    family = "binomial")
+
+
+  test <- glm(in_library ~ track_popularity + loudness + 
+                acousticness + instrumentalness + valence, data = full,
+      family = "binomial")
+summary(test)
+
+
+prop <- glm(in_library ~ 1, data = full, family = "binomial")
+exp(summary(prop)$coeff[,1])/(1 + exp(summary(prop)$coeff[,1]))
+summary(prop)
+
+summary(lm(valence ~ in_library, data = full))
+
+prop.table(table(full$in_library))
+
+
+summary(test)
+exp(confint(test))
+
+step.model <- test %>% MASS::stepAIC(trace = FALSE, direction = "both")
+summary(step.model)
+confint(step.model)
+
+#all_songs <- map_df(str_c("prof-data/", list.files("prof-data/", pattern = "artist_feat*")), readRDS)
+
+```
+
+
+
+```{r}
+
+features_1 %>% 
+  select(-type) %>% 
+  pivot_longer(-id) %>% 
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(~name, scales = "free") +
+  theme_minimal()
+  
+
+full %>% 
+  filter(!is.na(id)) %>% 
+  ggplot(aes(x = energy, y = valence,  colour = factor(in_library))) +
+  geom_point() + theme_minimal() +
+  geom_vline(aes(xintercept = 0.5)) +
+  geom_hline(aes(yintercept = 0.5)) +
+  facet_wrap(~explicit)
+
+check <- get_artists(artist_list[350:360,1])
+
+
+
+```
+
+#
+
+```{r}
+
+
+
+
+```
+
+
+
+# New data
+
+```{r}
+
+new_spotify_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv') 
+
+other_artists <- map_df(str_c("prof-data/", list.files("prof-data", patter = "artist_features_*")), 
+                        readRDS) %>% 
+  select(track_id, track_name, danceability, energy, key, loudness, mode, speechiness, acousticness, instrumentalness, liveness, valence, tempo)
+
+filtered <- new_spotify_songs %>% 
+   # select(track_id, track_name, danceability, energy, key, loudness, mode, speechiness, acousticness, instrumentalness, liveness, valence, tempo) %>% 
+ # bind_rows(other_artists) %>% 
+  distinct(track_id, .keep_all = T) %>% 
+  filter(!(track_id %in% tracks$track.id))
+
+
+predictions <- filtered %>% 
+  mutate(predicted_val = predict.glm(test, newdata = filtered, type = "response")) %>% 
+  arrange(desc(predicted_val)) %>% 
+  head(15)
+
+
+```
+
+
+# Quiz data
+
+```{r}
+
+pilot_data <- tibble(
+  person = str_c("Person ", rep(1:4, each = 3)),
+  quiz = str_c("Quiz ", c(2, 3, 4, 1, 3, 4, 1, 2, 4, 1, 2, 3)),
+  condition = rep(c("Silence", "Music"), each = 6),
+  score = c(34, 48, 57, 56, 59, 69, 75, 74, 99, 68, 50, 60)
+)
+
+# write_csv(pilot_data, "data/pilot_data.csv")
+
+lm(score ~ person, data = pilot_data)
+
+lm(score ~ condition, data = pilot_data)
+
+lm(score ~ person + condition, data = pilot_data)
+
+lme4::lmer(score ~ condition + (1|person) + (1|quiz), 
+           data = pilot_data, REML = F)
+
+```
+
+
+# Poisson
+
+```{r}
+set.seed(8)
+w_count <- full %>% 
+  filter(in_library == 1) %>% 
+  group_by(quad) %>% 
+  mutate(mu = case_when(
+    quad == "top right" ~ 10,
+    quad == "top left" ~ 7,
+    quad == "bottom left" ~ 2,
+    quad == "bottom right" ~ 3
+  )) %>% 
+  mutate(size = case_when(
+    quad == "top right" ~ 0.5,
+    quad == "top left" ~ 1,
+    quad == "bottom left" ~ 10,
+    quad == "bottom right" ~ 2
+  )) %>% 
+  rowwise() %>% 
+  mutate(play_count = rnbinom(1, mu = mu, size = size))
+
+w_count_student <- w_count %>% 
+  ungroup() %>% 
+  select(track_id, play_count)
+
+write_csv(w_count_student, "data/play_count.csv")
+
+w_count %>% 
+  group_by(quad) %>% 
+  summarise(mean = mean(play_count), var = var(play_count))
+
+```
+
+
+
+
+
+

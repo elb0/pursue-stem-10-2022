@@ -1,0 +1,557 @@
+---
+title: "Statistics and Data Science"
+subtitle: "Pursue STEM, Grade 10"
+author: "Nnenna Asidianya and Liza Bolton"
+date: "March 26, 2022"
+output:
+  xaringan::moon_reader:
+    css: [xaringan-themer.css, slides.css]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: 16:9z
+---
+
+```{r, libraries, include=FALSE}
+library(knitr)
+library(tidyverse)
+library(plotly)
+library(gridExtra)
+```
+
+
+```{r setup, eval=FALSE, include=FALSE}
+# R options
+options(
+  htmltools.dir.version = FALSE, # for blogdown
+  show.signif.stars = FALSE,     # for regression output
+  warm = 1,
+  crayon.enabled = FALSE
+  )
+# Set dpi and height for images
+
+opts_chunk$set(fig.height = 2.65, dpi =300, warning=FALSE, message=FALSE) 
+# ggplot2 color palette with gray
+color_palette <- list(gray = "#999999", 
+                      salmon = "#E69F00", 
+                      lightblue = "#56B4E9", 
+                      green = "#009E73", 
+                      yellow = "#F0E442", 
+                      darkblue = "#0072B2", 
+                      red = "#D55E00", 
+                      purple = "#CC79A7")
+
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+### xaringan::inf_mr() -> use this for display within Rstudio
+
+xaringanExtra::use_share_again()
+xaringanExtra::style_share_again(
+  share_buttons = "none"
+)
+
+htmltools::tagList(
+  xaringanExtra::use_clipboard(
+    button_text = "<i class=\"fa fa-clipboard\"></i>",
+    success_text = "<i class=\"fa fa-check\" style=\"color: #90BE6D\"></i>",
+    error_text = "<i class=\"fa fa-times-circle\" style=\"color: #F94144\"></i>"
+  ),
+  rmarkdown::html_dependency_font_awesome()
+)
+```
+
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+
+style_xaringan(
+  # Set fonts
+  header_font_google = google_font("Libre Baskerville"),
+  text_font_google   = google_font("Lato"),
+  code_font_google   = google_font("Fira Mono"),
+  # Title page
+  inverse_background_color = "#43003F",
+  inverse_text_color = "white",
+  title_slide_text_color =  "white",
+  # General
+  text_font_size = "30px",
+  header_color = "#43003F",
+  # Yellow highlight colour
+  #text_bold_color = "#FFCA17",
+  colors = c(
+    red = "#f34213",
+    yellow = "#FFCA17",
+    purple = "#43003F",
+    white = "#FFFFFF"
+  ))
+
+```
+
+class: header_background
+# Land acknowledgement
+
+The land on which the University of Toronto and Pursue STEM operate is the traditional lands of the .highlight[Anishinaabe], the .highlight[Haudenosaunee], and the .highlight[Mississaugas of the Credit]. With the Dish With One Spoon treaty, these peoples agreed to share and protect this land, and all those who have come here since, both Indigenous and non-Indigenous, are invited into this treaty in a spirit of respect and peace. This land is also, more recently, subject to Treaty 13, a treaty between the Mississaugas and the British Crown.
+
+Today, we are coming together to discuss statistics, a field that has been part of historical and ongoing colonization, oppression, and harm of Indigenous peoples and marginalized communities. Let us remind ourselves of our responsibilities to this land, its original peoples, and to each other and work to be ethical and culturally competent practitioners in our chosen fields.
+
+---
+name: topics
+
+## Topics
+You can click the following links to navigate through the slides (in the HTML version).
+
+* [What are we doing today?](#welcome)
+* [What are statistics and data science?](#stats)
+* [What is algorithmic bias?](#bias)
+* [What can we learn from exploring and visualizing data from Spotify's API?](#spotify)
+
+---
+class: middle, center, inverse
+name: welcome
+# What are we doing today?
+
+.header[<u>[Go to topics list](#topics)</u>]
+
+---
+## Go to https://pollev.com/bolton to answer (keep the link open)
+
+```{r, echo=FALSE, fig.align='center', out.width="55%"}
+knitr::include_graphics("libs/images/bts.png")
+```
+
+
+.footnote[Doesn't matter if you don't know who's who, just go with the vibe.]
+
+---
+## The plan
+
+* Meet Liza and Nnenna [20 minutes]
+* [What are statistics and data science?](#stats)  [10 minutes]
+* Scavenger hunt / break [5 minutes]
+* Scavenger hunt share [10 minutes]
+* [What is algorithmic bias?](#bias) [30 minutes]
+* Movement break [5 minutes]
+* [What can we learn from exploring and visualizing data from Spotify's API?](#spotify) [40]
+* Capstone [60 minutes]
+
+---
+## Hi, I'm Liza!
+
+.pull-left[
+
+You can call me Liza (pronounced like: "lie" and "zuh"). 
+
+* liza.bolton@utoronto.ca
+* Assistant Professor, Teaching Stream
+* Department of Statistical Science, Univeristy of Toronto
+
+.midi[
+I currently teach a range of university courses, but all of them touch on how we explore and visualize data, how we can learn from data, how we communicate what we find to others (statisticians and non-statisticians alike) and ethical considerations for people making decisions with data. ]
+]
+
+.pull-right[
+.small[
+* I used to be a Statistical Consultant in New Zealand, working with small and medium companies on a big range of topics, from things like vehicle traffic to people's experiences in their first jobs after university.
+* My research interests include how people's social and economic positions are related to health and topics in statistics education.
+* What do stats undergraduates do? One of my students has worked on a project on Broadway musicals, while another was looking at how big events like terrorist attacks or elections influence people's confidence in spending money. Students in my consulting course are exploring the history of detective stories, intensive care unit (ICU) risk scores, survey results about students belonging and how the people of Toronto use the parks.
+
+__Data are everywhere and so statistical skills are needed everywhere too.__
+]
+]
+
+---
+### Introductions in the New Zealand way
+
+```{r, echo=FALSE, fig.align='center', out.width="75%"}
+knitr::include_graphics("libs/images/mihi1.png")
+```
+
+---
+
+```{r, echo=FALSE, fig.align='center', out.width="65%"}
+knitr::include_graphics("libs/images/mihi2.png")
+```
+
+---
+
+.pull-left[
+Nnenna and I have worked on several things together. These are photos from some Zoom events we ran in the department in 2020. We both love statistics and dressing up!
+
+```{r, echo=FALSE, fig.align='center', out.width="100%"}
+knitr::include_graphics("libs/images/halloween.png")
+```
+]
+.pull-right[
+```{r, echo=FALSE, fig.align='center', out.width="100%"}
+knitr::include_graphics("libs/images/packages.jpeg")
+```
+
+.footnote[Wanna see more of what our department gets up to? Check out our recent news: https://www.statistics.utoronto.ca/news]
+
+]
+
+
+---
+## Nnenna Asidianya
+
+Hi, I'm Nnenna. I am in my third year as a PhD student in the Department of Statistical Sciences at University of Toronto.
+
+.midi[Since I began my career in biological sciences, a lot of my earlier work was at the interface of clinical sciences and life sciences.  In the past, I did quite a lot of work in clinical sciences and published a paper in Gastric cancer risk and non-native status in Ontario. I have previously collaborated on a project with a nephrologist that examined the risk factors for kidney graft failure.
+
+I am also interested in geospatial statistics. This may be informed by my interest in disease progression and how we can really examine the factors that influence the progression over time.    
+
+For the past few terms, I have taught introductory statistics to social science students. In this course we have covered a broad range of topics in relation to the pandemic. One that comes up is distance education and the ramifications of online learning considering the pandemic. There is a lot of space for statistical education that is emerging which is something that has always been an interest for me. There is a lot you can really explore with statistical sciences!]
+
+---
+class: middle, center, inverse
+name: stats
+# What are statistics and data science?
+
+.header[<u>[Go to topics list](#topics)</u>]
+
+---
+# Statistics and data science
+
+Statistics is the art and science of __learning from data__. It also gives us ways to quantify __uncertainty.__
+
+Data Science is a relatively new interdisciplinary field that also includes the computational aspects of acquiring, managing, and analyzing data. Both __reasoning__ with and __computing__ with data play important roles in these related disciplines. 
+
+
+---
+## What are they not?
+
+Statistics and data science are _NOT_...
+
+.pull-left[
+```{r, echo=FALSE, fig.align='center', out.width="100%"}
+knitr::include_graphics("libs/images/big-head.jpeg")
+```
+]
+
+.pull-right[
+```{r, echo=FALSE, fig.align='center', out.width="75%"}
+knitr::include_graphics("libs/images/cat-type.gif")
+```
+]
+
+---
+.pull-left[
+## What is statistics?
+```{r, echo=FALSE, fig.align='center', out.width="80%"}
+knitr::include_graphics("libs/images/certain.png")
+```
+]
+
+.pull-right[
+```{r, echo=FALSE, fig.align='center', out.width="75%"}
+knitr::include_graphics("libs/images/art-science.png")
+```
+]
+
+---
+## What is statistics?
+
+```{r, echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("libs/images/communication.png")
+```
+
+---
+## Who needs statisticians and data scientists?
+
+```{r, echo=FALSE, fig.align='center', out.width="95%"}
+knitr::include_graphics("libs/images/who-needs.png")
+```
+
+---
+
+```{r, echo=FALSE, fig.align='center', out.width="70%"}
+knitr::include_graphics("libs/images/you-need.png")
+```
+
+---
+
+```{r, echo=FALSE, fig.align='center', out.width="85%"}
+knitr::include_graphics("libs/images/shoulder.png")
+```
+
+---
+
+```{r, echo=FALSE, fig.align='center', out.width="85%"}
+knitr::include_graphics("libs/images/career.png")
+```
+
+```{r, echo=FALSE, fig.align='center', out.width="85%"}
+knitr::include_graphics("libs/images/one-word.png")
+```
+
+---
+
+## Examples you came up with how data is collected about you in your data-to-day life (1)
+
+* Social media.
+* Every time I watch a YouTube video, the algorithms are updating my feed with videos they think I'd be interested in. Unfortunately, my feed fills with only videos with the same subject matter of the video I was watching, so it doesn't encourage me to learn about new things and ideas.
+* When I search something up online that data is collected to give me targeted ads.
+* My debit card when buying things. The data tracks every payment transaction that occurs on my card.
+
+---
+
+## Examples you came up with how data is collected about you in your data-to-day life (2)
+
+* I decide to watch youtube in my free time sometimes. Youtube collects data based on your location, videos you choose to watch, IP address, and ads you click.
+* The history of videos I watch on youtube is collected and stored.
+* When driving the car (although I'm not driving) if the car is going above the limit, a camera will take a picture of the license plate. That sends our data elsewhere and charges the driver for not obeying the speed limit.
+* A way data is collected about me is through the music I listen to. The music I listen to more let's people know who I like and what kind of music I listen too.
+* Cookies on websites and apps take personal information (like location and previously viewed websites/apps) to promote advertisements that would be applicable to my daily life (online shopping sites, book store sites).
+
+
+---
+
+## Examples you came up with how data is collected about you in your data-to-day life (3)
+
+* One way that data might be collected about me is when I search something up on Google.
+* The data that is collected about me and used to make everyday decisions in my day to day life is the post I like. I'm very interested in fashion and design so when I like pictures on social media. The company send back clothes they think that I would find interested in.
+* An example from my life would be getting targeted ads, or suggested posts/creators/influencers from social media based off the videos and posts I interact and engage with and who I follow.
+
+---
+## Examples you came up with how data is collected about you in your data-to-day life (4)
+
+* One way data is collected about myself is when I use my devices. I get a small report about my screen time every week to show the number of hours I've been using it, the percentage difference from the prior week(s), and the apps I use the most. This data can be used to limit overall screen time.
+* When I use google drive for school, data is collected on what documents I open frequently and at what time I open the documents. This data can then be used to determine which documents to put in the priority section of google drive, making them easier to access.
+* Data collected about my eating preferences is used when my family goes grocery shopping.
+
+---
+class: middle, center, inverse
+
+# Scavenger hunt and break (5 minutes)
+
+.large[
+* Go find ONE thing that is related to data and/or statistics in some way. Be creative!
+* Grab some water/a snack etc.
+]
+
+---
+class: middle, center, inverse
+name: bias
+# What is algorithmic bias?
+
+.header[<u>[Go to topics list](#topics)</u>]
+
+---
+## Algorithmic bias
+
+.midi[Prediction models are taught what they "know" from training data. 
+Training data can be incomplete, biased, or skewed. This can result in
+__algorithmic bias__.]
+
+### Proxy variables
+
+.midsmall[There can also be situations where we know we DON'T want to use a variable as part of an algorithm, for ethical and often legal reasons (anti-discrimination laws about gender, race, health status, e.g. American's with Disabilities Act means you can't discriminate against people with mental health conditions). BUT there might be other variables in your data, like certain types of hobbies/memberships, home address, 'personality' quiz questions, that act as 'proxies' for these things, meaning they end of determining outcomes even when you don't want them to.]
+
+.small[
+__Optional reading__
++ Amazon scrapped 'sexist AI' tool, BBC, 2018. https://www.bbc.com/news/technology-45809919 
++ Amazon discreetly abandoned gender-biased AI-based recruiting tool, HRK News, 2018 https://www.hrkatha.com/recruitment/amazon-discreetly-abandoned-gender-biased-ai-based-recruiting-tool/
+]
+
+---
+## Should algorithms be transparent?
+
+Some predictive algorithms give us more than just a prediction: they also give us some
+insight as to what factor(s) influenced the prediction. Examples you might have encountered in your studies already include linear regression models and classification trees.
+
+Other algorithms yield predictions, but no information about how it got from the inputs
+to the prediction, such as neural networks . These are sometimes called 'black box' algorithms and many machine learning tools fall into this. 
+
+What is more important - getting the most accurate predictions, or understanding the factor(s) which influence a prediction?
+
+---
+class: middle 
+
+## Suggested reading
+
+Lum, K & Isaac, W. _To predict and serve?_ (2016). https://rss.onlinelibrary.wiley.com/doi/full/10.1111/j.1740-9713.2016.00960.x#sign960-bib-0001
+
+.pull-left[
+.midi[
+This article is an excellent and accessible introduction to ideas around predictive policing and the current issues.  
+
+(Lum's other work, previously as the Lead Statistician at the Human Rights Data Analysis Group and now as a prof at the University of Pennsylvania is awesome!)
+]]
+
+.pull-right[
+
+```{r, echo=FALSE, fig.align='center', out.width="95%"}
+include_graphics("libs/images/precog.gif")
+```
+
+.small[(If you've seen Minority Report, maybe you were already skeptical about predicting crimes before they happen...but probably for different reasons.)
+]]
+
+---
+class: middle, center, inverse
+
+# Movement break (5 mins)
+
+```{r, echo=FALSE, fig.align='center', out.width="70%"}
+include_graphics("libs/images/stretch.png")
+```
+
+---
+class: middle, center, inverse
+name: spotify
+# What can we learn from exploring and visualizing data from Spotify's API?
+
+.header[<u>[Go to topics list](#topics)</u>]
+
+---
+
+## Using an API
+
+API stands for __a__pplication __p__rogramming __i__nterface. 
+
+It is a structured way for data (broadly) requests to be made and fulfilled with computers. 
+
+I like [this](https://www.howtogeek.com/343877/what-is-an-api/) comparison to a restaurant menu. You don't need to know HOW to make crème brûlée to be able to know you WANT it.
+
+--
+
+If you are using an API, there still may be rules about things like how many requests you can make in a certain time frame and rate limiting. Make sure you're aware of these rules and behave in the spirit of them!
+
+Optional reading: https://beanumber.github.io/mdsr2e/ch-ethics.html#sec:terms-of-use 
+
+---
+
+.pull-left[
+.small[
+```{r, echo=FALSE}
+readRDS("data/student.RDS") %>% 
+  select(-id) %>% 
+  arrange(Artist) %>% 
+  slice(1:12) %>% 
+  knitr::kable()
+```
+]
+]
+
+.pull-left[
+.small[
+```{r, echo=FALSE}
+readRDS("data/student.RDS") %>% 
+  select(-id) %>% 
+  arrange(Artist) %>% 
+  slice(13:24) %>% 
+  knitr::kable()
+```
+]
+]
+
+---
+
+.pull-left[
+.small[
+```{r, echo=FALSE}
+readRDS("data/student.RDS") %>% 
+  select(-id) %>% 
+  arrange(Artist) %>% 
+  slice(25:34) %>% 
+  knitr::kable()
+```
+]
+]
+
+.pull-left[
+.small[
+```{r, echo=FALSE}
+readRDS("data/student.RDS") %>% 
+  select(-id) %>% 
+  arrange(Artist) %>% 
+  slice(35:45) %>% 
+  knitr::kable()
+```
+]
+]
+
+---
+## Data dictionary (reference slides)
+
+Description of variables available to you (3 slides). 'Class'
+
+|variable                 |class     |description |
+|:---|:---|:-----------|
+|artist_name             |character | Song artist|
+|artist_popularity       |number | Popularity score (0-100) based on track play and recency. Higher is better |
+|artist_followers        |number | Number of people who 'follow' the artist on Spotify|
+|album_name              |character| Name of the album the song if from |
+|album_release_year      |number | Year of album release|
+|track_name              |character | Song name|
+
+---
+
+.small[
+|variable                 |class     |description |
+|:---|:---|:-----------|
+|danceability            |number    | Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable. |
+|energy                   |number    | Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy. |
+|loudness                 |number    | The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track and are useful for comparing relative loudness of tracks. Loudness is the quality of a sound that is the primary psychological correlate of physical strength (amplitude). Values typical range between -60 and 0 db.|
+|speechiness              |number    | Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words. Values between 0.33 and 0.66 describe tracks that may contain both music and speech, either in sections or layered, including such cases as rap music. Values below 0.33 most likely represent music and other non-speech-like tracks. |
+|acousticness             |number    | A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic.|
+]
+
+---
+
+.small[
+|variable                 |class     |description |
+|:---|:---|:-----------|
+|instrumentalness         |number    | Predicts whether a track contains no vocals. “Ooh” and “aah” sounds are treated as instrumental in this context. Rap or spoken word tracks are clearly “vocal”. The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no vocal content. Values above 0.5 are intended to represent instrumental tracks, but confidence is higher as the value approaches 1.0. |
+|liveness                 |number    | Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was performed live. A value above 0.8 provides strong likelihood that the track is live. |
+|valence                  |number    | A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry). |
+|tempo                    |number    | The overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration. |
+|mode_name                    |character    | Mode indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived. |
+|duration_ms                    |number    | Length of the song in miliseconds. |
+|explicit                       |logical   | Is the song rated explicit? |
+|artist_genre                   |character | This variable is still a little messy, but you can see the genres that the artist's music is considered to belong to.|
+]
+
+---
+
+```{r, echo=FALSE, message = FALSE, warning = FALSE, fig.align='center'}
+bts <- readRDS("data/artist_22.Rds") %>% 
+  filter(artist_name %in% c("BTS"))
+
+g <- bts %>% 
+  ggplot(aes(x = valence, y = energy, colour = artist_name, text = track_name)) +
+    geom_point() +
+    theme_minimal() +
+    ylim(0,1) +
+    xlim(0,1) +
+    geom_hline(yintercept = 0.5) +
+    geom_vline(xintercept = 0.5) +
+    xlab("Positiveness (valence)") +
+    ylab("Engergy") + 
+    labs(title = "Song moods based on energy and positiveness", 
+         subtitle = "Using data from the Spotify API", 
+         colour = "Artist(s)",
+         caption = "Created by Pursue STEM, Grade 10s, 2022")
+
+ggsave("bts.png", g, height = 7, width = 10)
+
+```
+
+```{r, echo = F, out.height=4}
+knitr::include_graphics("bts.png")
+```
+
+
+---
+class: inverse, middle
+
+# Thank you!
+
+.header[<u>[Go to topics list](#topics)</u>]
+
+```{r eval = FALSE, echo = FALSE}
+
+pagedown::chrome_print("pursue-stem_stats.html", wait = 20)
+
+```

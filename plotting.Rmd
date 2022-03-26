@@ -1,0 +1,63 @@
+---
+title: "Visualizing our data"
+output: html_notebook
+---
+
+```{r, message = FALSE}
+library(tidyverse)
+library(plotly)
+full <- read_rds("data/artist_22.Rds")
+```
+
+
+```{r}
+bts <- full %>% 
+  filter(artist_name %in% c("BTS"))
+
+g <- bts %>% 
+  ggplot(aes(x = valence, y = energy, colour = artist_name, text = track_name)) +
+    geom_point() +
+    theme_minimal() +
+    ylim(0,1) +
+    xlim(0,1) +
+    geom_hline(yintercept = 0.5) +
+    geom_vline(xintercept = 0.5) +
+    xlab("Positiveness (valence)") +
+    ylab("Engergy") + 
+    labs(title = "Song moods based on energy and positiveness", 
+         subtitle = "Using data from the Spotify API", 
+         colour = "Artist(s)",
+         caption = "Created by Pursue STEM, Grade 10s, 2022")
+
+ggplotly(g, tooltip="text")
+
+```
+
+
+
+
+## More things you could try
+
+
+### Add more artists
+
+In the second line of code, add another artist. Make sure the spelling and capitalisation is extactly as it is in the raw data!
+
+```
+  filter(artist_name %in% c("Taylor Swift", "Bruno Mars")) %>% 
+```  
+
+### Change colours
+Try adding the following code:
+```
+# only works if you have one or three artists or fewer
+scale_color_manual(values = c("darkorchid4", "chartreuse4", "cyan2", "firebrick1"))
+```
+
+Change colours, here are some names you can tell R: http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
+
+### Make separate plots
+Try adding the following code:
+```
+facet_wrap(~arist_name)
+```
